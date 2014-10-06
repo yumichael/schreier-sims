@@ -1,6 +1,5 @@
 
 
-
 var Table = (function () { // Schereier-Sims algorithm table
 	function Table() {
 		this.entry = [];
@@ -12,7 +11,7 @@ var Table = (function () { // Schereier-Sims algorithm table
 		},
 		add: function (elem, name) {
 			console.log(0);
-		    elem = SpelledPermutation(elem, name + '^1');
+		    elem = new SpelledPermutation(elem, name + '^1');
 		    console.log(1);
 			var table = this;
 			var supp = elem.support();
@@ -119,7 +118,7 @@ var Table = (function () { // Schereier-Sims algorithm table
 			};
 			extend(Array, Representative, {
 				assign: function(n, val) {
-					this[n] = InversePermutation(val);
+					this[n] = new InversePermutation(val);
 				},
 			});
 
@@ -287,22 +286,7 @@ var Permutation = (function () {
 				preimage[this.image[i]] = i;
 			}
 			return new Permutation(preimage);
-		},/*
-		raise: function(exp) { // very suboptimal right now
-			if (exp === 0) {
-				return new Permutation();
-			}
-			var base = this;
-			if (exp < 0) {
-				base = this.inverse();
-				exp = -exp;
-			}
-			power = base;
-			for (exp = exp - 1; exp > 0; --exp) {
-				power = power.times(base);
-			}
-			return power;
-		},*/
+		},
 		times: function(other) {
 			var arr = new Array(Math.max(this.support(), other.support()));
 			for (var i = 0; i < arr.length; ++i) {
@@ -346,4 +330,11 @@ function copy(get, from) {
 		get[attr] = from[attr];
 	}
 	return get;
+}
+
+alert("Done loading!");
+
+function go() {
+	var T = new Table();
+	T.add([1,0], 't0');
 }
