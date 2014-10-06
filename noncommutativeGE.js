@@ -88,7 +88,7 @@ var Table = (function () { // Schereier-Sims algorithm table
 					spelledOut[i][1] *= -1;
 				}
 				spelledOut.reverse();
-				return new this.constructor(inverse, this.spellIn(spelledOut));
+				return new SpelledPermutation(inverse, this.spellIn(spelledOut));
 			},
 			times: function(other) {
 				var prod = base.prototype.times.call(this, other);
@@ -109,7 +109,7 @@ var Table = (function () { // Schereier-Sims algorithm table
 					}
 					thisSpelled.splice(thisIndex + 1, thisSpelled.length);
 					otherSpelled.splice(0, otherIndex);
-					return new this.constructor(prod, this.spellIn(thisSpelled.concat(otherSpelled)));
+					return new SpelledPermutation(prod, this.spellIn(thisSpelled.concat(otherSpelled)));
 				} else {
 					return prod;
 				}
@@ -147,7 +147,8 @@ var Table = (function () { // Schereier-Sims algorithm table
 			this.pred = pred;
 			this.supportValue = pred instanceof Column ? pred.support() + 1 : 1;
 			this.rep = new Structure.Representative(this.supportValue);
-			this.rep[this.supportValue - 1] = new SpelledPermutation();
+			this.rep.length = this.supportValue;
+			this.rep[this.supportValue - 1] = new InversePermutation();
 			this.generator = pred instanceof Column ? copy(new Structure.Generator(), pred.generator) : new Structure.Generator();
 		}
 		var column0 = {
@@ -181,11 +182,11 @@ var Table = (function () { // Schereier-Sims algorithm table
 				var result = column.reduce(gen);
 				if (typeof result === 'number') {
 					column.generator.forEach(function (gen) {
-						column.toAdd.dequeue(column.rep[result].times(gen));
+						column.toAdd.enqueue(column.rep[result].times(gen));
 					});
 				}
 				else { // result is reduced permutation
-					column.pred().close(result);
+					column.pred.close(result);
 				}
 			},
 			reduce: function(gen) {
@@ -193,7 +194,7 @@ var Table = (function () { // Schereier-Sims algorithm table
 				var k = column.support() - 1;
 				var j = gen.sends(k);
 				if (column.rep[j] === undefined) {
-					column.rep[j] = gen;
+					column.rep[j] = new InversePermutation(gen);
 					return j;
 				}
 				else {
@@ -227,10 +228,10 @@ var Table = (function () { // Schereier-Sims algorithm table
 					return this.array.push(val);
 				},
 				dequeue: function() {
-					if (this.next > 300) {
+					/*if (this.next > 300) {
 						this.array.splice(0, this.next);
 						this.next = 0;
-					}
+					}*/
 					var out = this.array[this.next];
 					++this.next;
 					return out;
@@ -264,7 +265,7 @@ var Table = (function () { // Schereier-Sims algorithm table
 			while (table.support() < supp) {
 				table.entry.push(new Column(table.entry[table.entry.length - 1]));
 			}
-			if (table.entry[table.entry.length - 1].feed(elem)) {
+			if (supp === 0 || table.entry[table.entry.length - 1].feed(elem)) {
 				return null;
 			}
 			table.key.push(elem);
@@ -313,7 +314,41 @@ function copy(get, from) {
 
 alert("Done loading!");
 
-function go() {
-	var T = new Table();
-	T.add([1,0], 't0');
+function view(table) {
+ var arr = [];
+ table.entry.forEach(function(entry, n) {
+  var stuff = [];
+  stuff.length = n;
+  entry.rep.forEach(function(perm, k) {
+   stuff[k] = perm.image;
+  });
+  arr.push(stuff);
+ });
+ return arr;
 }
+
+/*
+
+
+
+       0 1 2
+       3 4 5
+       6 7 8
+ 91011121314151617
+181920212223242526
+272829303132333435
+      363738
+      394041
+      424344
+
+      454647
+      484950
+      515253      
+
+      0 1 2 3 4 5 6 7 8 91011121314151617181920212223242526272829303132333435363738394041424344454647484950515253
+topcc            292011    36302112 6        3737     7        3813     8    332415                              
+
+
+
+
+*/
