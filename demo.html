@@ -6,5 +6,9 @@
 <script src="group_solver.js"></script>
 <script src="rubik.js"></script>
 <script src="megaminx.js"></script>
-
+<script>
+var mm = Group(megaminx());
+console.log(mm.size());
+console.log(mm.chain().filter(function(val){return val !== 1;}).join("*"));
+</script>
 <html>

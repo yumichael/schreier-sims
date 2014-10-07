@@ -8,7 +8,6 @@ var Group = (function(){
 	}
 
 	function Group(table) {
-		var group = this;
 		if (!(this instanceof Group)) {
 			return new Group(table);
 		}
@@ -24,14 +23,22 @@ var Group = (function(){
 			if (productRep === null) {
 				return null;
 			}
-			return word(productRep.spelling);
+			if (this.table.option.spelling) {
+				return word(productRep.spelling);
+			} else {
+				return '[' + productRep.image.join(' ') + ']';
+			}
 		},
 		represent: function() {
 			var entries = this.table.entries();
 			entries.forEach(function(col, i) {
 				col.forEach(function(rep, j) {
 					if (rep !== undefined) {
-						col[j] = word(rep.spelling);
+						if (this.table.option.spelling) {
+							col[j] = word(rep.spelling);
+						} else {
+							col[j] = '[' + rep.image.join(' ') + ']';
+						}
 					}
 				});
 			});

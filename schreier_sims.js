@@ -1,4 +1,10 @@
-var Table = (function () { // Schereier-Sims algorithm table
+var TableOption = (function () { // Schereier-Sims algorithm table
+
+return function(option) {
+	if (option === undefined) {
+		option = {};
+	}
+
 	var SpelledPermutation = (function () {
 		var inherit = Permutation;
 		function SpelledPermutation(arr, spelling) {
@@ -59,8 +65,10 @@ var Table = (function () { // Schereier-Sims algorithm table
 		return SpelledPermutation;
 	}());
 	
-	var Permutation1 = SpelledPermutation;
-
+	var Permutation1 = Permutation;
+	if (option.spelling) {
+		Permutation1 = SpelledPermutation;
+	}
 
 
 	var Column = (function () {
@@ -220,6 +228,7 @@ var Table = (function () { // Schereier-Sims algorithm table
 	function Table() {
 		this.entry = [new Column(undefined)];
 		this.key = {};
+		this.option = option;
 	}
 	extend(Table, {
 		support: function() {
@@ -250,7 +259,7 @@ var Table = (function () { // Schereier-Sims algorithm table
 			if (elem.support() > this.support()) {
 				return null;
 			}
-			return productRep = table.entry[table.entry.length - 1].compute(elem);
+			return this.entry[this.entry.length - 1].compute(elem);
 		},
 		entries: function() {
 			var entries = [];
@@ -270,4 +279,7 @@ var Table = (function () { // Schereier-Sims algorithm table
 
 
 	return Table;
+
+}
+
 }());
