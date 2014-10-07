@@ -51,72 +51,62 @@ var Permutation = (function () {
 
 var Table = (function () { // Schereier-Sims algorithm table
 	var SpelledPermutation = (function () {
-		var base = Permutation;
-		var TIMES = ' ';
-		var RAISE = '^';
+		var inherit = Permutation;
 		function SpelledPermutation(arr, spelling) {
-		    base.call(this, arr);
+		    inherit.call(this, arr);
 		    if (this.support() === 0) {
-		        this.spelling = '';
+		        this.spelling = {base:[], exponent:[]};
 		        return;
 		    }
-		    if (spelling !== undefined) {
+		    if (typeof spelling === "object") {
 				this.spelling = spelling;
+			} else if (typeof spelling === "string") {
+				this.spelling = {base:[spelling], exponent:[1]};
 			}
 		}
-		extend(base, SpelledPermutation, {
-			spellOut: function() {
-				var arr = [];
-				this.spelling.split(TIMES).forEach(function(str) {
-					var pair = str.split(RAISE);
-					pair[1] = parseInt(pair[1]);
-					arr.push(pair);
-				});
-				return arr;
-			},
-			spellIn: function(spelledOut) {
-				var arr = [];
-				spelledOut.forEach(function(pair) {
-					arr.push(pair.join(RAISE));
-				});
-				return arr.join(TIMES);
-			},
+		extend(inherit, SpelledPermutation, {
 			inverse: function() {
-				var inverse = base.prototype.inverse.call(this);
-				var spelledOut = this.spellOut();
-				for (var i = 0; i < spelledOut.length; ++i) {
-					spelledOut[i][1] *= -1;
-				}
-				spelledOut.reverse();
-				return new SpelledPermutation(inverse, this.spellIn(spelledOut));
+				var inverse = inherit.prototype.inverse.call(this);
+				var base = this.spelling.base.slice();
+				var exponent = this.spelling.exponent.slice();
+				exponent.forEach(function(exp, i, arr) {
+					arr[i] = -exp;
+				});
+				base.reverse();
+				exponent.reverse();
+				return new SpelledPermutation(inverse, {base:base, exponent:exponent});
 			},
 			times: function(other) {
-				var prod = base.prototype.times.call(this, other);
+				var prod = inherit.prototype.times.call(this, other);
 				if (other instanceof SpelledPermutation) {
-					var thisSpelled = this.spellOut();
-					var otherSpelled = other.spellOut();
-					var thisIndex = thisSpelled.length - 1;
+					var thisIndex = this.spelling.base.length - 1;
 					var otherIndex = 0;
-					while (thisIndex in thisSpelled && otherIndex in otherSpelled &&
-						thisSpelled[thisIndex][0] === otherSpelled[otherIndex][0]) {
-						var sum = thisSpelled[thisIndex][1] + otherSpelled[otherIndex][1];
-						--thisIndex;
-						if (sum !== 0) {
-							otherSpelled[otherIndex][1] = sum;
+					var sum = 0;
+					while (thisIndex >= 0 && otherIndex < other.spelling.base.length) {
+						if (this.spelling.base[thisIndex] === other.spelling.base[otherIndex]) {
+							sum = this.spelling.exponent[thisIndex] + other.spelling.exponent[otherIndex];
+							--thisIndex;
+							if (sum !== 0) {
+								break;
+							}
+							++otherIndex;
+						} else {
 							break;
 						}
-						++otherIndex;
 					}
-					thisSpelled.splice(thisIndex + 1, thisSpelled.length);
-					otherSpelled.splice(0, otherIndex);
-					return new SpelledPermutation(prod, this.spellIn(thisSpelled.concat(otherSpelled)));
+					var base = this.spelling.base.slice(0, thisIndex + 1);
+					base.push.apply(base, other.spelling.base.slice(otherIndex));
+					var exponent = this.spelling.exponent.slice(0, thisIndex + 1);
+					var otherExponent = other.spelling.exponent.slice(otherIndex);
+					if (sum !== 0) {
+						otherExponent[0] = sum;
+					}
+					return new SpelledPermutation(prod, {base:base, exponent:exponent.concat(otherExponent)});
 				} else {
 					return prod;
 				}
 			},
 		});
-		SpelledPermutation.TIMES = TIMES;
-		SpelledPermutation.RAISE = RAISE;
 		return SpelledPermutation;
 	}());
 
@@ -124,16 +114,18 @@ var Table = (function () { // Schereier-Sims algorithm table
 
 	var Column = (function () {
 		var InversePermutation = (function() {
-			var base = SpelledPermutation;
+			var inherit = SpelledPermutation;
 			function InversePermutation() {
-				base.apply(this, arguments);
-				var inverse = this.inverse();
-				this.preimage = inverse.image;
-				this.inverseSpelling = inverse.spelling;
+				inherit.apply(this, arguments);
+				if (this.inverseValue === undefined) {
+					this.inverseValue = inherit.prototype.inverse.call(this);
+					this.inverseValue.inverseValue = this;
+					this.inverseValue = new InversePermutation(this.inverseValue);
+				}
 			}
-			extend(base, InversePermutation, {
+			extend(inherit, InversePermutation, {
 				inverse: function() {
-					return new base(this.preimage, this.inverseSpelling);
+					return this.inverseValue;
 				}
 			});
 			return InversePermutation;
@@ -184,8 +176,7 @@ var Table = (function () { // Schereier-Sims algorithm table
 					column.generator.forEach(function (gen) {
 						column.toAdd.enqueue(column.rep[result].times(gen));
 					});
-				}
-				else { // result is reduced permutation
+				} else { // result is reduced permutation
 					column.pred.close(result);
 				}
 			},
@@ -196,8 +187,7 @@ var Table = (function () { // Schereier-Sims algorithm table
 				if (column.rep[j] === undefined) {
 					column.rep[j] = new InversePermutation(gen);
 					return j;
-				}
-				else {
+				} else {
 					return gen.times(column.rep[j].inverse());
 				}
 			},
@@ -259,7 +249,7 @@ var Table = (function () { // Schereier-Sims algorithm table
 			return this.entry.length;
 		},
 		add: function (elem, name) {
-		    elem = new SpelledPermutation(elem, name + SpelledPermutation.RAISE + '1');
+		    elem = new SpelledPermutation(elem, name);
 			var table = this;
 			var supp = elem.support();
 			while (table.support() < supp) {
@@ -307,24 +297,34 @@ function extend() {
 }
 function copy(get, from) {
 	for (var attr in from) {
-		get[attr] = from[attr];
+		if (from.hasOwnProperty(attr)) {
+			get[attr] = from[attr];
+		}
 	}
 	return get;
 }
 
 alert("Done loading!");
 
+function word(spelling) {
+	var arr = [];
+	spelling.base.forEach(function(symb, i) {
+		arr.push(symb + '^' + spelling.exponent[i]);
+	});
+	return arr.join(' ');
+},
+
 function view(table) {
- var arr = [];
- table.entry.forEach(function(entry, n) {
-  var stuff = [];
-  stuff.length = n;
-  entry.rep.forEach(function(perm, k) {
-   stuff[k] = perm.image;
-  });
-  arr.push(stuff);
- });
- return arr;
+	var arr = [];
+	table.entry.forEach(function(entry, n) {
+		var stuff = [];
+		stuff.length = n;
+		entry.rep.forEach(function(perm, k) {
+			stuff[k] = perm.image.concat(word(perm.spelling));
+		});
+		arr.push(stuff);
+	});
+	return arr;
 }
 
 /*
