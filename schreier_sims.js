@@ -18,9 +18,9 @@ var Table = (function () { // Schereier-Sims algorithm table
 				var inverse = inherit.prototype.inverse.call(this);
 				var base = this.spelling.base.slice();
 				var exponent = this.spelling.exponent.slice();
-				exponent.forEach(function(exp, i, arr) {
-					arr[i] = -exp;
-				});
+				for (var i = 0; i < exponent.length; ++i) {
+					exponent[i] *= -1;
+				}
 				base.reverse();
 				exponent.reverse();
 				return new SpelledPermutation(inverse, {base:base, exponent:exponent});
@@ -58,12 +58,14 @@ var Table = (function () { // Schereier-Sims algorithm table
 		});
 		return SpelledPermutation;
 	}());
+	
+	var Permutation1 = SpelledPermutation;
 
 
 
 	var Column = (function () {
 		var InversePermutation = (function() {
-			var inherit = SpelledPermutation;
+			var inherit = Permutation1;
 			function InversePermutation() {
 				inherit.apply(this, arguments);
 				if (this.inverseValue === undefined) {
@@ -89,7 +91,8 @@ var Table = (function () { // Schereier-Sims algorithm table
 			this.supportValue = pred instanceof Column ? pred.support() + 1 : 1;
 			this.rep = new Structure.Representative(this.supportValue);
 			this.rep.length = this.supportValue;
-			this.rep[this.supportValue - 1] = new InversePermutation();
+			this.rep[this.supportValue - 1] = new InversePermutation();/*
+			this.rep.forEach = Structure.Representative_forEach;*/
 			this.generator = pred instanceof Column ? copy(new Structure.Generator(), pred.generator) : new Structure.Generator();
 		}
 		var column0 = {
@@ -97,7 +100,7 @@ var Table = (function () { // Schereier-Sims algorithm table
 			add: function(gen){},
 			reduce: function(gen){return gen;},
 			feed: function(elem) {return true;},
-			compute: function(elem) {return new SpelledPermutation();}
+			compute: function(elem) {return new Permutation();}
 		};
 		extend(Column, {
 			support: function() {
@@ -107,8 +110,12 @@ var Table = (function () { // Schereier-Sims algorithm table
 				var column = this;
 				column.toAdd = new Structure.Queue();
 				column.generator.push(newGen);
-				column.rep.forEach(function(rep) {
-					column.add(rep.times(newGen));
+				column.add(newGen, true);
+				column.rep.forEach(function(rep, k) {
+					if (k === this.supportValue - 1) {
+						return;
+					}
+					column.toAdd.enqueue(rep.times(newGen));
 				});
 				while (column.toAdd.size()) {
 					var gen = column.toAdd.dequeue();
@@ -116,9 +123,9 @@ var Table = (function () { // Schereier-Sims algorithm table
 				}
 				column.toAdd = undefined;
 			},
-			add: function(gen) {
+			add: function(gen, directly) {
 				var column = this;
-				if (column.feed(gen)) { // when gen is id*newGen, you don't need to check this TODO
+				if (!directly && column.feed(gen)) { // when gen is id*newGen, you don't need to check this TODO
 					return null;
 				}
 				var result = column.reduce(gen);
@@ -159,8 +166,14 @@ var Table = (function () { // Schereier-Sims algorithm table
 		});
 
 		var Structure = (function () {
-			var Representative = Array;
-			// assign method
+			var Representative = Array;/*
+			function forEach(callBack) {
+				for (var i = this.length - 1; i >= 0; --i) {
+					if (this[i] !== undefined) {
+						callBack(this[i], i, this);
+					}
+				}
+			}*/
 
 			var Generator = Array;
 
@@ -187,7 +200,8 @@ var Table = (function () { // Schereier-Sims algorithm table
 			});
 
 			return {
-				Representative: Representative,
+				Representative: Representative,/*
+				Representative_forEach: forEach,*/
 				Generator: Generator,
 				Queue: Queue,
 			};
@@ -212,7 +226,7 @@ var Table = (function () { // Schereier-Sims algorithm table
 			return this.entry.length;
 		},
 		add: function (elem, name) {
-		    elem = new SpelledPermutation(elem, name);
+		    elem = new Permutation1(elem, name);
 			var table = this;
 			var supp = elem.support();
 			while (table.support() < supp) {
@@ -240,15 +254,16 @@ var Table = (function () { // Schereier-Sims algorithm table
 		},
 		entries: function() {
 			var entries = [];
-			this.entry.forEach(function(entry, n) {
+			for (var n = 0; n < this.entry.length; ++n) {
 				var stuff = [];
-				entry.rep.forEach(function(perm, k) {
-					if (perm !== undefined) {
-						stuff[k] = perm;
+				var rep = this.entry[n].rep;
+				for (var k = 0; k < rep.length; ++k) {
+					if (rep[k] !== undefined) {
+						stuff[k] = rep[k];
 					}
-				});
+				}
 				entries.push(stuff);
-			});
+			}
 			return entries;
 		}
 	});
