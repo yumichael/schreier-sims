@@ -11,16 +11,28 @@ var Permutation = (function () {
 			arr = [];
 		}
 		// keeps array as its own internal representation
-		this.image = arr;
 		if (arr === undefined || arr.length === 0 || arr.length === 1) {
 			arr.length = 0;
-		} else {
-			for (var i = arr.length - 1; i >= 0; --i) {
-				if (arr[i] !== i) {
-					break;
+			this.image = arr;
+		} else { // arr instanceof Array
+			if (arr[0] instanceof Array) { // cycle form
+				var image = [];
+				arr.forEach(function(cyc) {
+					image[cyc[cyc.length - 1]] = cyc[0];
+					for (var i = 1; i < cyc.length; ++i) {
+						image[cyc[i - 1]] = cyc[i];
+					}
+				});
+				this.image = image;
+			} else { // expanded form
+				for (var i = arr.length - 1; i >= 0; --i) {
+					if (arr[i] !== i) {
+						break;
+					}
 				}
+				arr.length = i + 1;
+				this.image = arr;
 			}
-			arr.length = i + 1;
 		}
 	}
 	extend(Permutation, { // an immutable permutation
@@ -312,7 +324,7 @@ function word(spelling) {
 		arr.push(symb + '^' + spelling.exponent[i]);
 	});
 	return arr.join(' ');
-},
+}
 
 function view(table) {
 	var arr = [];
