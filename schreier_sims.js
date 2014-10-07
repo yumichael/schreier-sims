@@ -225,6 +225,13 @@ var Table = (function () { // Schereier-Sims algorithm table
 			table.entry[table.entry.length - 1].close(elem);
 			return true;
 		},
+		include: function(elem) {
+			for (var name in elem) {
+				if (elem.hasOwnProperty(name)) {
+					this.add(elem[name], name);
+				}
+			}
+		},
 		compute: function (elem) {
 			if (elem.support() > this.support()) {
 				return null;
