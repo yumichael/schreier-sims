@@ -1,66 +1,3 @@
-var Permutation = (function () {
-	function Permutation(arr) { // assumes array input is a permutation
-		if (!(this instanceof Permutation)) {
-			return new Permutation(arr);
-		}
-		if (arr instanceof Permutation) {
-			copy(this, arr);
-			return;
-		}
-		if (arr === undefined) {
-			arr = [];
-		}
-		// keeps array as its own internal representation
-		if (arr === undefined || arr.length === 0 || arr.length === 1) {
-			arr.length = 0;
-			this.image = arr;
-		} else { // arr instanceof Array
-			if (arr[0] instanceof Array) { // cycle form
-				var image = [];
-				arr.forEach(function(cyc) {
-					image[cyc[cyc.length - 1]] = cyc[0];
-					for (var i = 1; i < cyc.length; ++i) {
-						image[cyc[i - 1]] = cyc[i];
-					}
-				});
-				this.image = image;
-			} else { // expanded form
-				for (var i = arr.length - 1; i >= 0; --i) {
-					if (arr[i] !== i) {
-						break;
-					}
-				}
-				arr.length = i + 1;
-				this.image = arr;
-			}
-		}
-	}
-	extend(Permutation, { // an immutable permutation
-		support: function() {
-			return this.image.length;
-		},
-		sends: function(i) {
-			return i < this.support() ? this.image[i] : i;
-		},
-		inverse: function() {
-			var preimage = new Array(this.support());
-			for (var i = 0; i < preimage.length; ++i) {
-				preimage[this.image[i]] = i;
-			}
-			return new Permutation(preimage);
-		},
-		times: function(other) {
-			var arr = new Array(Math.max(this.support(), other.support()));
-			for (var i = 0; i < arr.length; ++i) {
-			    var j = i in this.image ? this.image[i] : i;
-				arr[i] = j in other.image ? other.image[j] : j;
-			}
-			return new Permutation(arr);
-		},
-	});
-	return Permutation;
-}());
-
 var Table = (function () { // Schereier-Sims algorithm table
 	var SpelledPermutation = (function () {
 		var inherit = Permutation;
@@ -159,7 +96,8 @@ var Table = (function () { // Schereier-Sims algorithm table
 			close: function(newGen){},
 			add: function(gen){},
 			reduce: function(gen){return gen;},
-			feed: function(elem) {return true;}
+			feed: function(elem) {return true;},
+			compute: function(elem) {return new SpelledPermutation();}
 		};
 		extend(Column, {
 			support: function() {
@@ -209,6 +147,14 @@ var Table = (function () { // Schereier-Sims algorithm table
 					return false;
 				}
 				return this.pred.feed(elem.times(this.rep[j].inverse()));
+			},
+			compute: function(elem) {
+				var j = elem.sends(this.support() - 1);
+				if (this.rep[j] === undefined) {
+					return null;
+				}
+				var result = this.pred.compute(elem.times(this.rep[j].inverse()));
+				return result === null ? null : result.times(this.rep[j]);
 			}
 		});
 
@@ -251,10 +197,15 @@ var Table = (function () { // Schereier-Sims algorithm table
 		return Column;
 	}());
 
+////////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////
 
 	function Table() {
-		this.entry = [];
-		this.key = [];
+		this.entry = [new Column(undefined)];
+		this.key = {};
 	}
 	extend(Table, {
 		support: function() {
@@ -270,120 +221,31 @@ var Table = (function () { // Schereier-Sims algorithm table
 			if (supp === 0 || table.entry[table.entry.length - 1].feed(elem)) {
 				return null;
 			}
-			table.key.push(elem);
+			table.key[name] = elem;
 			table.entry[table.entry.length - 1].close(elem);
 			return true;
 		},
+		compute: function (elem) {
+			if (elem.support() > this.support()) {
+				return null;
+			}
+			return productRep = table.entry[table.entry.length - 1].compute(elem);
+		},
+		entries: function() {
+			var entries = [];
+			this.entry.forEach(function(entry, n) {
+				var stuff = [];
+				entry.rep.forEach(function(perm, k) {
+					if (perm !== undefined) {
+						stuff[k] = perm;
+					}
+				});
+				entries.push(stuff);
+			});
+			return entries;
+		}
 	});
 
 
 	return Table;
 }());
-
-
-
-
-function Surrogate() {}
-function extend() {
-	var methodsIndex;
-	var sub, base;
-	if (typeof arguments[0] === "function" && typeof arguments[1] === "function") {
-		base = arguments[0];
-		sub = arguments[1];
-		methodsIndex = 2;
-		Surrogate.prototype = base.prototype;
-		sub.prototype = new Surrogate();
-		sub.prototype.constructor = sub;
-	} else {
-		sub = arguments[0];
-		methodsIndex = 1;
-	}
-	var method = arguments[methodsIndex];
-	if (typeof method === "object") {
-		for (var name in method) {
-			if (method.hasOwnProperty(name)) {
-				sub.prototype[name] = method[name];
-			}
-		}
-	}
-}
-function copy(get, from) {
-	for (var attr in from) {
-		if (from.hasOwnProperty(attr)) {
-			get[attr] = from[attr];
-		}
-	}
-	return get;
-}
-
-alert("Done loading!");
-
-function word(spelling) {
-	var arr = [];
-	spelling.base.forEach(function(symb, i) {
-		arr.push(symb + '^' + spelling.exponent[i]);
-	});
-	return arr.join(' ');
-}
-
-function view(table) {
-	var arr = [];
-	table.entry.forEach(function(entry, n) {
-		var stuff = [];
-		stuff.length = n;
-		entry.rep.forEach(function(perm, k) {
-			stuff[k] = perm.image.concat(word(perm.spelling));
-		});
-		arr.push(stuff);
-	});
-	return arr;
-}
-
-/*
-       0 1 2
-       3 4 5
-       6 7 8
- 91011121314151617
-181920212223242526
-272829303132333435
-      363738
-      394041
-      424344
-
-      454647
-      484950
-      515253      
-*/
-
-function m1 (arr) {
-	for (var i = 0; i < arr.length; ++i) {
-		--arr[i];
-	}
-	return arr;
-}
-
-var bottom = m1([18, 27, 36, 4, 5, 6, 7, 8, 9, 3, 11, 12, 13, 14, 15, 16, 17, 45, 2,
-20, 21, 22, 23, 24, 25, 26, 44, 1, 29, 30, 31, 32, 33, 34, 35, 43,
-37, 38, 39, 40, 41, 42, 10, 19, 28, 52, 49, 46, 53, 50, 47, 54, 51, 48]);
-var toparr = m1([1, 2, 3, 4, 5, 6, 16, 25, 34, 10, 11, 9, 15, 24, 33, 39, 17, 18, 19,
-20, 8, 14, 23, 32, 38, 26, 27, 28, 29, 7, 13, 22, 31, 37, 35, 36, 12,
-21, 30, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54]);
-var front = m1([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-20, 21, 22, 23, 24, 25, 26, 27, 31, 32, 33, 34, 35, 36, 48, 47, 46,
-39, 42, 45, 38, 41, 44, 37, 40, 43, 30, 29, 28, 49, 50, 51, 52, 53, 54]);
-var back = m1([3, 6, 9, 2, 5, 8, 1, 4, 7, 54, 53, 52, 10, 11, 12, 13, 14, 15, 19,
-20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36,
-37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 18, 17, 16]);
-var left = m1([13, 2, 3, 22, 5, 6, 31, 8, 9, 12, 21, 30, 37, 14, 15, 16, 17, 18, 11,
-20, 29, 40, 23, 24, 25, 26, 27, 10, 19, 28, 43, 32, 33, 34, 35, 36,
-46, 38, 39, 49, 41, 42, 52, 44, 45, 1, 47, 48, 4, 50, 51, 7, 53, 54]);
-var right = m1([1, 2, 48, 4, 5, 51, 7, 8, 54, 10, 11, 12, 13, 14, 3, 18, 27, 36, 19,
-20, 21, 22, 23, 6, 17, 26, 35, 28, 29, 30, 31, 32, 9, 16, 25, 34, 37,
-38, 15, 40, 41, 24, 43, 44, 33, 46, 47, 39, 49, 50, 42, 52, 53, 45]);
-
-var bm = Permutation(bottom);
-var tp = Permutation(toparr);
-var fn = Permutation(front);
-var bk = Permutation(back);
-var lf = Permutation(left);
-var rg = Permutation(right);
