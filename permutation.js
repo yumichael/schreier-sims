@@ -49,7 +49,7 @@ var Permutation = (function () {
 			}
 			return new Permutation(preimage);
 		},
-		times: function(other) {
+		before: function(other) {
 			var arr = new Array(Math.max(this.support(), other.support()));
 			for (var i = 0; i < arr.length; ++i) {
 			    var j = i in this.image ? this.image[i] : i;
@@ -122,7 +122,7 @@ var Permutation = (function () {
 		}
 		var val = new Permutation();
 		function evaluator(perm) {
-			val = val.times(perm);
+			val = val.before(perm);
 		}
 		makeScanner(makeTokenizer(makeParser(evaluator)))(str);
 		return val;

@@ -31,8 +31,8 @@ return function(option) {
 				exponent.reverse();
 				return new SpelledPermutation(inverse, {base:base, exponent:exponent});
 			},
-			times: function(other) {
-				var prod = inherit.prototype.times.call(this, other);
+			before: function(other) {
+				var prod = inherit.prototype.before.call(this, other);
 				if (other instanceof SpelledPermutation) {
 					var thisIndex = this.spelling.base.length - 1;
 					var otherIndex = 0;
@@ -123,7 +123,7 @@ return function(option) {
 					if (k === this.supportValue - 1) {
 						return;
 					}
-					column.toAdd.enqueue(rep.times(newGen));
+					column.toAdd.enqueue(rep.before(newGen));
 				});
 				while (column.toAdd.size()) {
 					var gen = column.toAdd.dequeue();
@@ -139,7 +139,7 @@ return function(option) {
 				var result = column.reduce(gen);
 				if (typeof result === 'number') {
 					column.generator.forEach(function (gen) {
-						column.toAdd.enqueue(column.rep[result].times(gen));
+						column.toAdd.enqueue(column.rep[result].before(gen));
 					});
 				} else { // result is reduced permutation
 					column.pred.close(result);
@@ -153,7 +153,7 @@ return function(option) {
 					column.rep[j] = new InversePermutation(gen);
 					return j;
 				} else {
-					return gen.times(column.rep[j].inverse());
+					return gen.before(column.rep[j].inverse());
 				}
 			},
 			feed: function(elem) {
@@ -161,15 +161,15 @@ return function(option) {
 				if (this.rep[j] === undefined) {
 					return false;
 				}
-				return this.pred.feed(elem.times(this.rep[j].inverse()));
+				return this.pred.feed(elem.before(this.rep[j].inverse()));
 			},
 			compute: function(elem) {
 				var j = elem.sends(this.support() - 1);
 				if (this.rep[j] === undefined) {
 					return null;
 				}
-				var result = this.pred.compute(elem.times(this.rep[j].inverse()));
-				return result === null ? null : result.times(this.rep[j]);
+				var result = this.pred.compute(elem.before(this.rep[j].inverse()));
+				return result === null ? null : result.before(this.rep[j]);
 			}
 		});
 
