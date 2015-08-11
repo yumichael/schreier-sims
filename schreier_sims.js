@@ -108,7 +108,7 @@ return function(option) {
 			add: function(gen){},
 			reduce: function(gen){return gen;},
 			feed: function(elem) {return true;},
-			compute: function(elem) {return new Permutation();}
+			compute: function(elem) {return new Permutation1();}
 		};
 		extend(Column, {
 			support: function() {

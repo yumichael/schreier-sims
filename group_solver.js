@@ -84,10 +84,6 @@ var Group = (function(){
 
 
 
-alert("Done loading!");
-
-
-
 function view(table) {
 	var arr = [];
 	table.entry.forEach(function(entry, n) {
