@@ -1,5 +1,8 @@
 var TableOption = (function () { // Schereier-Sims algorithm table
-
+// Refer to the paper "Efficient representation of perm groups" by Knuth
+// for referencing the code with the algorithm.
+// In particular the algorithm is implemented in the Column class
+// Look for the tag #Knuth
 return function(option) {
 	if (option === undefined) {
 		option = {};
@@ -117,11 +120,11 @@ return function(option) {
 			close: function(newGen) { // assumes newGen is not in <table>
 				var column = this;
 				column.toAdd = new Structure.Queue();
-				column.generator.push(newGen);
+				column.generator.push(newGen); // #Knuth A1
 				column.add(newGen, true);
 				column.rep.forEach(function(rep, k) {
 					if (k === this.supportValue - 1) {
-						return;
+						return; // no need to add id * newGen
 					}
 					column.toAdd.enqueue(rep.before(newGen));
 				});
@@ -133,7 +136,8 @@ return function(option) {
 			},
 			add: function(gen, directly) {
 				var column = this;
-				if (!directly && column.feed(gen)) { // when gen is id*newGen, you don't need to check this TODO
+				if (!directly && column.feed(gen)) { // #TODO when gen is id*newGen, you don't need to check this // nvm?? line 126
+					// I check membership once and for all here before adding to avoid unnecessary calls to feed on recursion
 					return null;
 				}
 				var result = column.reduce(gen);
@@ -142,28 +146,29 @@ return function(option) {
 						column.toAdd.enqueue(column.rep[result].before(gen));
 					});
 				} else { // result is reduced permutation
-					column.pred.close(result);
+					column.pred.close(result); // #Knuth B4
 				}
 			},
-			reduce: function(gen) {
+			reduce: function(gen) { // #Knuth algorithm B_k(pi) where pi = gen
 				var column = this;
 				var k = column.support() - 1;
-				var j = gen.sends(k);
-				if (column.rep[j] === undefined) {
-					column.rep[j] = new InversePermutation(gen);
+				var j = gen.sends(k); // #Knuth B1
+				if (column.rep[j] === undefined) { // #Knuth B2
+					column.rep[j] = new InversePermutation(gen); // #Knuth B2 cont'd
 					return j;
-				} else {
+				} else { // #Knuth leads into B4 in the parent context upon return
+					// # Knuth B3 never happens because I checked that the added perm is new
 					return gen.before(column.rep[j].inverse());
 				}
 			},
-			feed: function(elem) {
+			feed: function(elem) { // simply tests membership (same as compute really but this returns boolean)
 				var j = elem.sends(this.support() - 1);
 				if (this.rep[j] === undefined) {
 					return false;
 				}
 				return this.pred.feed(elem.before(this.rep[j].inverse()));
 			},
-			compute: function(elem) {
+			compute: function(elem) { // tests membership of elem in the table; not part of maintenance algorithm
 				var j = elem.sends(this.support() - 1);
 				if (this.rep[j] === undefined) {
 					return null;
