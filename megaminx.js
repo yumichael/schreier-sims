@@ -26,12 +26,12 @@ var megaminx = (function() {
 	var bl = Permutation.evaluate(upBackLeft);
 	var br = Permutation.evaluate(upBackRight);
 	var ro = new Permutation(rollOver);
-	var tm_ = ro.times(tm).times(ro);
-	var uf_ = ro.times(uf).times(ro);
-	var ls_ = ro.times(ls).times(ro);
-	var rs_ = ro.times(rs).times(ro);
-	var bl_ = ro.times(bl).times(ro);
-	var br_ = ro.times(br).times(ro);
+	var tm_ = ro.before(tm).before(ro);
+	var uf_ = ro.before(uf).before(ro);
+	var ls_ = ro.before(ls).before(ro);
+	var rs_ = ro.before(rs).before(ro);
+	var bl_ = ro.before(bl).before(ro);
+	var br_ = ro.before(br).before(ro);
 
 
 	function megaminx() {
