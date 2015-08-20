@@ -36,21 +36,21 @@ var Permutation = (function () {
 		}
 	}
 	extend(Permutation, { // an immutable permutation
-		support: function() {
+		domain: function() {
 			return this.image.length;
 		},
 		sends: function(i) {
-			return i < this.support() ? this.image[i] : i;
+			return i < this.domain() ? this.image[i] : i;
 		},
 		inverse: function() {
-			var preimage = new Array(this.support());
+			var preimage = new Array(this.domain());
 			for (var i = 0; i < preimage.length; ++i) {
 				preimage[this.image[i]] = i;
 			}
 			return new Permutation(preimage);
 		},
 		before: function(other) {
-			var arr = new Array(Math.max(this.support(), other.support()));
+			var arr = new Array(Math.max(this.domain(), other.domain()));
 			for (var i = 0; i < arr.length; ++i) {
 			    var j = i in this.image ? this.image[i] : i;
 				arr[i] = j in other.image ? other.image[j] : j;

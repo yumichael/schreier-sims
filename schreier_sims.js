@@ -39,10 +39,10 @@ return function(option) {
 				copy(this, column0);
 			}
 			this.pred = pred;
-			this.supportValue = pred instanceof Column ? pred.support() + 1 : 1;
-			this.rep = new Structure.Representative(this.supportValue);
-			this.rep.length = this.supportValue;
-			this.rep[this.supportValue - 1] = new InversePermutation();/*
+			this.domainValue = pred instanceof Column ? pred.domain() + 1 : 1;
+			this.rep = new Structure.Representative(this.domainValue);
+			this.rep.length = this.domainValue;
+			this.rep[this.domainValue - 1] = new InversePermutation();/*
 			this.rep.forEach = Structure.Representative_forEach;*/
 			this.generator = pred instanceof Column ? copy(new Structure.Generator(), pred.generator) : new Structure.Generator();
 		}
@@ -54,8 +54,8 @@ return function(option) {
 			compute: function(elem) {return new Permutation1();}
 		};
 		extend(Column, {
-			support: function() {
-				return this.supportValue;
+			domain: function() {
+				return this.domainValue;
 			},
 			close: function(newGen) { // assumes newGen is not in <table>
 				var column = this;
@@ -63,7 +63,7 @@ return function(option) {
 				column.generator.push(newGen); // #Knuth A1
 				column.add(newGen, true);
 				column.rep.forEach(function(rep, k) {
-					if (k === this.supportValue - 1) {
+					if (k === this.domainValue - 1) {
 						return; // no need to add id * newGen
 					}
 					column.toAdd.enqueue(rep.before(newGen));
@@ -91,7 +91,7 @@ return function(option) {
 			},
 			reduce: function(gen) { // #Knuth algorithm B_k(pi) where pi = gen
 				var column = this;
-				var k = column.support() - 1;
+				var k = column.domain() - 1;
 				var j = gen.sends(k); // #Knuth B1
 				if (column.rep[j] === undefined) { // #Knuth B2
 					column.rep[j] = new InversePermutation(gen); // #Knuth B2 cont'd
@@ -102,14 +102,14 @@ return function(option) {
 				}
 			},
 			feed: function(elem) { // simply tests membership (same as compute really but this returns boolean)
-				var j = elem.sends(this.support() - 1);
+				var j = elem.sends(this.domain() - 1);
 				if (this.rep[j] === undefined) {
 					return false;
 				}
 				return this.pred.feed(elem.before(this.rep[j].inverse()));
 			},
 			compute: function(elem) { // tests membership of elem in the table; not part of maintenance algorithm
-				var j = elem.sends(this.support() - 1);
+				var j = elem.sends(this.domain() - 1);
 				if (this.rep[j] === undefined) {
 					return null;
 				}
@@ -176,14 +176,14 @@ return function(option) {
 		this.option = option;
 	}
 	extend(Table, {
-		support: function() {
+		domain: function() {
 			return this.entry.length;
 		},
 		add: function (elem, name) {
 		    elem = new Permutation1(elem, name);
 			var table = this;
-			var supp = elem.support();
-			while (table.support() < supp) {
+			var supp = elem.domain();
+			while (table.domain() < supp) {
 				table.entry.push(new Column(table.entry[table.entry.length - 1]));
 			}
 			if (supp === 0 || table.entry[table.entry.length - 1].feed(elem)) {
@@ -201,7 +201,7 @@ return function(option) {
 			}
 		},
 		compute: function (elem) {
-			if (elem.support() > this.support()) {
+			if (elem.domain() > this.domain()) {
 				return null;
 			}
 			return this.entry[this.entry.length - 1].compute(elem);

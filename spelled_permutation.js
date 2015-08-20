@@ -3,7 +3,7 @@ var SpelledPermutation = (function () {
 		
 		function SpelledPermutation(arr, spelling) {
 		    inherit.call(this, arr);
-		    if (this.support() === 0) {
+		    if (this.domain() === 0) {
 		        this.spelling = {base:[], exponent:[]};
 		        return;
 		    }

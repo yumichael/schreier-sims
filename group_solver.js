@@ -17,8 +17,8 @@ var Group = (function(){
 		this.generator = table.key;
 	}
 	extend(Group, {
-		support: function() {
-			return this.table.support();
+		domain: function() {
+			return this.table.domain();
 		},
 		compute: function(elem) {
 			var productRep = this.table.compute(elem);
