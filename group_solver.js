@@ -2,7 +2,9 @@ var Group = (function(){
 	function word(spelling) {
 		var arr = [];
 		spelling.base.forEach(function(symb, i) {
-			arr.push(symb + '^' + spelling.exponent[i]);
+			for (var i = 0; i < spelling.exponent[i]; ++i) {
+				arr.push(symb);
+			}
 		});
 		return arr.join(' ');
 	}
@@ -30,11 +32,12 @@ var Group = (function(){
 			}
 		},
 		represent: function() {
-			var entries = this.table.entries();
+			var table = this.table;
+			var entries = table.entries();
 			entries.forEach(function(col, i) {
 				col.forEach(function(rep, j) {
 					if (rep !== undefined) {
-						if (this.table.option.spelling) {
+						if (table.option.spelling) {
 							col[j] = word(rep.spelling);
 						} else {
 							col[j] = '[' + rep.image.join(' ') + ']';

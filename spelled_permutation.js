@@ -1,5 +1,6 @@
 var SpelledPermutation = (function () {
 		var inherit = Permutation;
+		
 		function SpelledPermutation(arr, spelling) {
 		    inherit.call(this, arr);
 		    if (this.support() === 0) {
