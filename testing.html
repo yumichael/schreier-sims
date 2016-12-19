@@ -11,8 +11,9 @@
 function demo() {
 	var r = Group(rubik());
 	console.log(r.pattern());
-	console.log("The group's size = " + r.chain().filter(function(val){return val !== 1;}).join("*"));
-	console.log("The group's size is to large to multiply out directly: it is about " + r.size());
+	console.log("The Rubik Cube group's size = " + r.chain().filter(function(val){return val !== 1;}).join("*")) + ".";
+	console.log("The group's size is to large to multiply out directly without giving rounding errors.");
+	console.log("But if you copy the product expression to Wolfram|Alpha, you'll get 43,252,003,274,489,856,000, which is the correct number.")
 	console.log("The tree thing above is the pattern of the table of the group per the Schreier-Sims algorithm.");
 }
 window.onload = demo;
@@ -20,6 +21,8 @@ var cb = Group(rubik());
 </script>
 
 <body>
-Hello World
+This is a demonstration of solving the group represented by the <a href="https://en.wikipedia.org/wiki/Rubik's_Cube">Rubik's Cube</a> puzzle.
+<br />
+Right click and go to "Inspect Element", and from there go to the Console to view the output.
 </body>
 <html>

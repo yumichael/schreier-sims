@@ -12,19 +12,18 @@ function demo() {
 	var mm = Group(megaminx());
 	console.log(mm.pattern());
 	console.log("The group's size = " + mm.chain().filter(function(val){return val !== 1;}).join("*"));
-	console.log("The group's size is to large to multiply out directly: it is about " + mm.size());
+	console.log("The group's size is too large to multiply out directly: it is about " + mm.size());
 	console.log("The tree thing above is the pattern of the table of the group per the Schreier-Sims algorithm.");
 }
 window.onload = demo;
 </script>
 
 <body>
-!!!
 This is a demonstration of solving the group represented by the <a href="http://en.wikipedia.org/wiki/Megaminx">Megaminx</a> puzzle.
 <br />
 Right click and go to "Inspect Element", and from there go to the Console to view the output.
 <br />
-The computation takes a little time, so wait a minute for the output to show up.
+The computation takes a little time, so wait a few seconds for the output to show up.
 <br />
 <img src="top_net.jpg" style="width:480px;height:600px">
 <img src="bottom_net.jpg" style="width:480px;height:600px">
